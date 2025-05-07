@@ -314,6 +314,8 @@ if config["US"].get("retrieve_US_databundle", True):
                     "EIA930_2021_Jan_Jun_opt.csv",
                     "EIA930_2021_Jul_Dec_opt.csv",
                     "HS861 2010-.xlsx",
+                    "demand_data/table_10_EIA_utility_sales.xlsx",
+                    "demand_data/Electric_Retail_Service_Territories.geojson",
                 ],
             ),
             directory(
@@ -338,28 +340,28 @@ if config["US"].get("retrieve_US_databundle", True):
             delta_months=5,
             merge_files=False,            
         output:
-            expand(
-                "analysis/gdrive_data/data/utilities/ipums_puma_2010/{filename}",
-                filename=[
-                    "ipums_puma_2010.CPG",
-                    "ipums_puma_2010.sbn",
-                    "ipums_puma_2010.shp.xml",
-                    "ipums_puma_2010.dbf",
-                    "ipums_puma_2010.sbx",
-                    "ipums_puma_2010.shx",
-                    "ipums_puma_2010.prj",
-                    "ipums_puma_2010.shp",
-                ],
-            ),
-#            directory(
-#                pathlib.Path(
-#                    "analysis",
-#                    "gdrive_data",
-#                    "data",
-#                    "utilities",
-#                    "ipums_puma_2010",
-#                )
+#            expand(
+#                "analysis/gdrive_data/data/utilities/ipums_puma_2010/{filename}",
+#                filename=[
+#                    "ipums_puma_2010.CPG",
+#                    "ipums_puma_2010.sbn",
+#                    "ipums_puma_2010.shp.xml",
+#                    "ipums_puma_2010.dbf",
+#                    "ipums_puma_2010.sbx",
+#                    "ipums_puma_2010.shx",
+#                    "ipums_puma_2010.prj",
+#                    "ipums_puma_2010.shp",
+#                ],
 #            ),
+            directory(
+                pathlib.Path(
+                    "analysis",
+                    "gdrive_data",
+                    "data",
+                    "utilities",
+                    "ipums_puma_2010",
+                )
+            ),
         script:
             "analysis/scripts/download_from_gdrive.py"
 
