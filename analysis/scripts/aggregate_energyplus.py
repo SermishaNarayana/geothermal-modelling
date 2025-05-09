@@ -2,6 +2,7 @@ import logging
 import pandas as pd
 import geopandas as gpd
 import pathlib
+import numpy as np
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -53,6 +54,13 @@ def consolidate_pumas(
         fl_path
         for fl_path in data_state_fls
         if fl_path.name not in ["ak.csv", "hi.csv", "AK.csv", "HI.csv"]
+    ]
+    
+    # To remove hidden files listed in the directory
+    data_state_fls_clean = [
+    fl_path
+    for fl_path in data_state_fls
+    if not fl_path.name.startswith(".")
     ]
 
     # a single time-series dataframe is needed to look-up for each PUMA -----------
@@ -121,12 +129,12 @@ if __name__ == "__main__":
         default_path, snakemake.input.state_comstock_cool_dir
     )
 
-    shapes_path = pathlib.Path(default_path, snakemake.input.shapes_path)
+    shapes_path = pathlib.Path(default_path, snakemake.input.shapes_path[0])
     puma_path = pathlib.Path(default_path, snakemake.input.puma_path)
     states_path = pathlib.Path(default_path, snakemake.input.states_path)
 
-    heat_demand_path = pathlib.Path(default_path, snakemake.output.heat_demand_path)
-    cool_demand_path = pathlib.Path(default_path, snakemake.output.cool_demand_path)
+    heat_demand_path = pathlib.Path(default_path, snakemake.output.heat_demand_path[0])
+    cool_demand_path = pathlib.Path(default_path, snakemake.output.cool_demand_path[0])
 
     # gis information is processed for the model and PUMA regions
     # to match demand time series for the model bus regions
@@ -199,6 +207,12 @@ if __name__ == "__main__":
             bus=bus,
             bus_pumas=bus_pumas,
         )
+
+        # Comstock has 15 minutes granularity and restock 1 hour, 
+        # Grouping all comstock data to hourly granularity
+        comstock_pumas_heating_df = comstock_pumas_heating_df.groupby(np.arange(len(comstock_pumas_heating_df.index)) // 4).sum()
+        comstock_pumas_heating_df.index = resstock_pumas_cooling_df.index
+
         comstock_pumas_heating_list[i] = comstock_pumas_heating_df
 
         comstock_pumas_cooling_df = lookup_bus_pumas(
@@ -206,6 +220,11 @@ if __name__ == "__main__":
             bus=bus,
             bus_pumas=bus_pumas,
         )
+
+        # Comstock has 15 minutes granularity and restock 1 hour, 
+        # Grouping all comstock data to hourly granularity
+        comstock_pumas_cooling_df = comstock_pumas_cooling_df.groupby(np.arange(len(comstock_pumas_cooling_df.index)) // 4).sum()
+        comstock_pumas_cooling_df.index = resstock_pumas_cooling_df.index
 
         # for cooling we don't distinguish between the residential and services sector
         pumas_cooling_list[i] = resstock_pumas_cooling_df + comstock_pumas_cooling_df
@@ -300,6 +319,7 @@ if __name__ == "__main__":
         ],
         axis=1,
     )
+    breakpoint()
 
     if not DATA_IS_SCALED:
         # 2) cooling
@@ -310,5 +330,12 @@ if __name__ == "__main__":
 
     add_level_column(df=cooling_load_aggreg_df, level_name="space")
 
+    # Year adjustments in the data to match the snapshot year
+    snapshot_year=int(snakemake.params.snapshot_start[:4])
+    data_year=pd.to_datetime(heating_overall_load.index).year.unique()[0]
+    year_offset=data_year - snapshot_year
+    heating_overall_load.index = pd.to_datetime(heating_overall_load.index) - pd.DateOffset(years=year_offset)
+    cooling_load_aggreg_df.index = pd.to_datetime(cooling_load_aggreg_df.index) - pd.DateOffset(years=year_offset)
+    
     heating_overall_load.to_csv(heat_demand_path)
     cooling_load_aggreg_df.to_csv(cool_demand_path)
