@@ -134,7 +134,7 @@ def drop_unrequired_sector_totals(energy_totals):
     for key in sector_keys:
         filtered_cols = energy_totals.filter(like=key)
         #checked_cols = [x for x in filtered_cols if "heat" not in x]
-        checked_cols = [x for x in checked_cols if "electricity" not in x]
+        checked_cols = [x for x in filtered_cols if "electricity" not in x]
         energy_totals.loc["US", checked_cols] = 0
 
     return energy_totals
