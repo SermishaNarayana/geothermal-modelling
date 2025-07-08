@@ -61,7 +61,7 @@ scenario:
   planning_horizons: # investment years for myopic and perfect; or costs year for overnight
   - 2050
   sopts:
-  - "12H"
+  - "120H-gtflex"
   demand:
   - "DF"
 
@@ -162,8 +162,8 @@ renewable:
 costs:
   year: 2050
   version: v0.11.0
-  financial_case: "Market" 
-  scenario: "Moderate" 
+  financial_case: "Market"
+  scenario: "Moderate"
   rooftop_share: 0.14  # based on the potentials, assuming  (0.1 kW/m2 and 10 m2/person)
   USD2013_to_EUR2013: 0.92 #0.7532 # [EUR/USD] ECB: https://www.ecb.europa.eu/stats/exchange/eurofxref/html/eurofxref-graph-usd.en.html
   fill_values:
@@ -194,6 +194,12 @@ export:
   h2export: [0]
 
 sector:
+  electricity_distribution_grid: false
+
+  co2_network: false
+
+  biomass_transport: false
+
   district_heating:
     potential: 0 #maximum fraction of urban demand which can be supplied by district heating
     #increase of today's district heating demand to potential maximum district heating share
